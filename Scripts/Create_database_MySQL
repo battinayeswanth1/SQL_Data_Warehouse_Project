@@ -18,7 +18,7 @@ DROP DATABASE IF EXISTS dw_bronze;
 DROP DATABASE IF EXISTS dw_silver;
 DROP DATABASE IF EXISTS dw_gold;
 
--- 2. Create the Bronze Layer (Raw data from source`0
+-- 2. Create the Bronze Layer (Raw data from source)
 CREATE DATABASE dw_bronze 
 
 
