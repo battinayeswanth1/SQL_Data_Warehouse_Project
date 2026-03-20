@@ -23,9 +23,10 @@ The final stage where data is integrated into a Star Schema. This layer supports
 
 ### 👷🏽Building the Data Warehouse (Data Engineering)
 
-Objective: Develop a modern data warehouse using MySQL to consolidate sales data, enabling analytical reporting and informed decision-making.
+### Objective: 
+Develop a modern data warehouse using MySQL to consolidate sales data, enabling analytical reporting and informed decision-making.
 
-Specifications:
+### Specifications:
 
 Data Sources: Import data from two source systems (ERP and CRM) provided as CSV files.
 
@@ -41,7 +42,8 @@ Documentation: Provide clear documentation of the data model to support both bus
 
 ### 📊BI: Analytics & Reporting (Data Analytics)
 
-#### Objective: Develop SQL-based analytics to deliver detailed insights into:
+### Objective: 
+Develop SQL-based analytics to deliver detailed insights into:
 
 
 Customer Behavior
