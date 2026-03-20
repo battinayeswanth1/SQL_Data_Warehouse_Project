@@ -1,3 +1,19 @@
+/*
+===============================================================================
+Script: Load Bronze Layer (Source -> Bronze)
+===============================================================================
+Description:
+    This script loads data into the 'dw_bronze' schema from external CSV files. 
+    It performs the following actions:
+    - Truncates the bronze tables before loading data.
+    - Uses the `LOAD DATA LOCAL INFILE` command for high-speed ingestion.
+    - Tracks start, end, and total durations for performance monitoring.
+
+Usage:
+    Run this script as a standalone .sql file in MySQL Workbench.
+===============================================================================
+*/
+
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS load_bronze //
