@@ -16,7 +16,8 @@ Focuses on Data Cleaning, Standardizing, and Normalizing. It resolves data quali
 
 ### 🥇Gold Layer (Analytics):
 The final stage where data is integrated into a Star Schema. This layer supports Business Logic and Aggregations, making the data ready for reporting.
-<img width="1644" height="1082" alt="image" src="https://github.com/user-attachments/assets/9f4c3347-25cc-487d-aec0-4b46b20827ed" />
+<img width="832" height="554" alt="image" src="https://github.com/user-attachments/assets/561999b3-6f7f-4684-bb2c-2217b10c74ba" />
+
 
 
 
