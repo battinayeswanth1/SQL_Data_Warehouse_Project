@@ -1,48 +1,68 @@
-	-- loading into dw_silver.crm_cust_info
+/*
+===============================================================================
+SILVER LAYER LOAD SCRIPT
+===============================================================================
+Purpose: 
+    This script performs the ETL (Extract, Transform, Load) process to move data
+    from the 'Bronze' (Raw) layer to the 'Silver' (Cleansed) layer.
+    
+Actions:
+    - Truncates Silver tables before loading (Full Refresh).
+    - Standardizes column formats and naming.
+    - Cleanses 'dirty' data (Handling NULLs, fixing invalid dates).
+    - Imputes missing values using logical calculations (Sales/Price).
+    - Deduplicates records to ensure data integrity.
+===============================================================================
+*/
 
-TRUNCATE TABLE silver.crm_cust_info;
-INSERT INTO silver.crm_cust_info (
-			cst_id, 
-			cst_key, 
-			cst_firstname, 
-			cst_lastname, 
-			cst_marital_status, 
-			cst_gndr,
-			cst_create_date
-		)
-		SELECT
-			cst_id,
-			cst_key,
-			TRIM(cst_firstname) AS cst_firstname,
-			TRIM(cst_lastname) AS cst_lastname,
-			CASE UPPER(TRIM(cst_marital_status))
-				WHEN 'S' THEN 'Single'
-				WHEN 'M' THEN 'Married'
-				ELSE 'n/a'
-			END AS cst_marital_status, -- Normalize marital status values to readable format
-			CASE 
-				WHEN UPPER(TRIM(cst_gndr)) = 'F' THEN 'Female'
-				WHEN UPPER(TRIM(cst_gndr)) = 'M' THEN 'Male'
-				ELSE 'n/a'
-			END AS cst_gndr, -- Normalize gender values to readable format
-			cst_create_date
-		FROM (
-			SELECT
-				*,
-				ROW_NUMBER() OVER (PARTITION BY cst_id ORDER BY cst_create_date DESC) AS flag
-			FROM bronze.crm_cust_info
-			WHERE cst_id != 0
-		) t
-		WHERE flag = 1; -- Select the most recent record per customer
+-- =============================================================================
+-- 1. Loading crm_cust_info (Deduplicated & Standardized)
+-- =============================================================================
+TRUNCATE TABLE dw_silver.crm_cust_info;
 
+INSERT INTO dw_silver.crm_cust_info (
+    cst_id, 
+    cst_key, 
+    cst_firstname, 
+    cst_lastname, 
+    cst_marital_status, 
+    cst_gndr, 
+    cst_create_date
+)
+SELECT
+    cst_id,
+    cst_key,
+    TRIM(cst_firstname),
+    TRIM(cst_lastname),
+    -- Normalize Marital Status
+    CASE UPPER(TRIM(cst_marital_status))
+        WHEN 'S' THEN 'Single'
+        WHEN 'M' THEN 'Married'
+        ELSE 'n/a'
+    END,
+    -- Normalize Gender
+    CASE 
+        WHEN UPPER(TRIM(cst_gndr)) = 'F' THEN 'Female'
+        WHEN UPPER(TRIM(cst_gndr)) = 'M' THEN 'Male'
+        ELSE 'n/a'
+    END,
+    cst_create_date
+FROM (
+    -- Deduplication logic: Keep the most recent record per customer ID
+    SELECT *,
+        ROW_NUMBER() OVER (PARTITION BY cst_id ORDER BY cst_create_date DESC) AS flag
+    FROM dw_bronze.crm_cust_info
+    WHERE cst_id != 0
+) t
+WHERE flag = 1;
 
+-- =============================================================================
+-- 2. Loading crm_prd_info (Key Extraction & Validity Ranges)
+-- =============================================================================
+TRUNCATE TABLE dw_silver.crm_prd_info;
 
-
--- loading into dw_silver.crm_prd_info
-
-TRUNCATE TABLE silver.crm_prd_info;
-insert into dw_silver.crm_prd_info(
-	prd_id,
+INSERT INTO dw_silver.crm_prd_info (
+    prd_id,
     prd_key,
     cat_id,
     prd_nm,
@@ -50,28 +70,34 @@ insert into dw_silver.crm_prd_info(
     prd_line,
     prd_start_dt,
     prd_end_dt
-  )
-  select 
-	prd_id,
-    substring(prd_key,7, length(prd_key)) as prd_key,
-    replace(left(prd_key,5),'-', '_') as cat_id,
+)
+SELECT 
+    prd_id,
+    -- Extracting specific ID from composite key
+    SUBSTRING(prd_key, 7) AS prd_key,
+    REPLACE(LEFT(prd_key, 5), '-', '_') AS cat_id,
     prd_nm,
     prd_cost,
-    case upper(trim(prd_line))
-	when 'R' then 'Road'
-    when 'S' then 'Other sales'
-    when 'M' then 'Mountain'
-    when 'T' then 'Touring'
-    else 'N/A'
-    end prd_line,
+    -- Standardizing Product Line Categories
+    CASE UPPER(TRIM(prd_line))
+        WHEN 'R' THEN 'Road'
+        WHEN 'S' THEN 'Other Sales'
+        WHEN 'M' THEN 'Mountain'
+        WHEN 'T' THEN 'Touring'
+        ELSE 'n/a'
+    END,
     prd_start_dt,
-    lead(prd_start_dt) over(partition by prd_key order by prd_start_dt) - interval 1 day as prd_end_dt
-  from crm_prd_info;
+    -- Calculating the end date by looking at the start date of the next record
+    LEAD(prd_start_dt) OVER (PARTITION BY prd_key ORDER BY prd_start_dt) - INTERVAL 1 DAY
+FROM dw_bronze.crm_prd_info;
 
+-- =============================================================================
+-- 3. Loading crm_sales_details (Data Imputation & Date Parsing)
+-- =============================================================================
+TRUNCATE TABLE dw_silver.crm_sales_details;
 
-truncate table dw_silver.crm_sales_details;
-insert into dw_silver.crm_sales_details(
-	sls_ord_num, 
+INSERT INTO dw_silver.crm_sales_details (
+    sls_ord_num, 
     sls_prd_key, 
     sls_cst_id, 
     sls_order_dt, 
@@ -81,93 +107,61 @@ insert into dw_silver.crm_sales_details(
     sls_quantity, 
     sls_price
 )
-select 
-	sls_ord_num, 
+SELECT 
+    sls_ord_num, 
     sls_prd_key, 
     sls_cst_id,
-	case
-		when sls_order_dt <= 0 or length(sls_order_dt) != 8 then null
-        else str_to_date(sls_order_dt , '%Y%m%d') 
-        end sls_order_dt,
-	case
-		when sls_ship_dt <= 0 or length(sls_ship_dt) != 8 then null
-        else str_to_date(sls_ship_dt , '%Y%m%d') 
-        end sls_ship_dt,
-	case
-		when sls_due_dt <= 0 or length(sls_due_dt) != 8 then null
-        else str_to_date(sls_due_dt , '%Y%m%d') 
-        end sls_due_dt,
-	case 
-		when (sls_sales <=0 or sls_sales is null or sls_sales != sls_quantity * abs(sls_price)) and (sls_quantity >0 and sls_price >0)
-        then sls_quantity * abs(sls_price)
-        else sls_sales
-        end sls_sales,
-	sls_quantity,
-	case
-		when sls_price <=0 then round(sls_sales/sls_quantity)
-        else sls_price
-        end sls_price
-from crm_sales_details
+    -- Parsing integers into Date objects (YYYYMMDD)
+    CASE WHEN sls_order_dt <= 0 OR LENGTH(sls_order_dt) != 8 THEN NULL
+         ELSE STR_TO_DATE(sls_order_dt, '%Y%m%d') END,
+    CASE WHEN sls_ship_dt <= 0 OR LENGTH(sls_ship_dt) != 8 THEN NULL
+         ELSE STR_TO_DATE(sls_ship_dt, '%Y%m%d') END,
+    CASE WHEN sls_due_dt <= 0 OR LENGTH(sls_due_dt) != 8 THEN NULL
+         ELSE STR_TO_DATE(sls_due_dt, '%Y%m%d') END,
+    -- Sales Imputation: Recalculate sales if value is zero or mathematically incorrect
+    CASE 
+        WHEN (sls_sales <= 0 OR sls_sales IS NULL OR sls_sales != sls_quantity * ABS(sls_price)) 
+             AND (sls_quantity > 0 AND sls_price > 0)
+        THEN sls_quantity * ABS(sls_price)
+        ELSE sls_sales
+    END,
+    sls_quantity,
+    -- Price Imputation: Derive price from sales if missing
+    CASE
+        WHEN (sls_price <= 0 OR sls_price IS NULL) AND sls_quantity > 0 
+        THEN ROUND(sls_sales / sls_quantity)
+        ELSE sls_price
+    END
+FROM dw_bronze.crm_sales_details;
 
+-- =============================================================================
+-- 4. Loading erp_cust_info (ID Standardization & Gender Normalization)
+-- =============================================================================
+TRUNCATE TABLE dw_silver.erp_cust_info;
 
-truncate table dw_silver.erp_cust_info;
-insert into dw_silver.erp_cust_info(
-	cst_cid, 
+INSERT INTO dw_silver.erp_cust_info (cst_cid, cst_bdate, cst_gen)
+SELECT 
+    -- Removing 'NAS' prefix to enable joins with CRM data
+    CASE WHEN cst_cid LIKE 'NAS%' THEN SUBSTRING(cst_cid, 4)
+         ELSE cst_cid END,
     cst_bdate, 
-    cst_gen
-)
-select 
-	case
-		when cst_cid like 'NAS%' then substring(cst_cid,4,length(cst_cid))
-        else cst_cid
-        end cst_cid,
-	case 
-		when cst_bdate > now() then null
-		else cst_bdate
-		end cst_bdate,
-	case 
-		when trim(upper(cst_gen)) in ('M', 'MALE') then 'Male'
-		when trim(upper(cst_gen)) in ('F', 'FEMALE') then 'Female'
-		else 'n/a'
-		end cst_gen
- from erp_cust_info;
+    CASE WHEN TRIM(UPPER(cst_gen)) IN ('M', 'MALE') THEN 'Male'
+         WHEN TRIM(UPPER(cst_gen)) IN ('F', 'FEMALE') THEN 'Female'
+         ELSE 'n/a' END
+FROM dw_bronze.erp_cust_info;
 
+-- =============================================================================
+-- 5. Loading erp_loc_info (Country Standardization)
+-- =============================================================================
+TRUNCATE TABLE dw_silver.erp_loc_info;
 
-truncate table dw_silver.erp_loc_info;
-insert into dw_silver.erp_loc_info(
-	loc_cid, 
-    loc_cntry
-    )
-select 
-    replace(loc_cid, '-','') as loc_cid,
-    case 
-		when upper(trim(loc_cntry)) in('US' , 'USA') then 'United States'
-        when upper(trim(loc_cntry)) = 'DE' then 'Germany'
-        when upper(trim(loc_cntry)) = '' or loc_cntry is null then 'n/a'
-        else trim(loc_cntry)
-        end loc_cntry
-from erp_loc_info
-
-
-truncate table dw_silver.erp_px_cat_info;
-
-insert into dw_silver.erp_px_cat_info(
-	cat_id,
-    cat_cat,
-    cat_subcat,
-    cat_maintenance
-)
-select *
-from erp_px_cat_info
-
-
- 
-
- 
- 
- 
- 
- 
-
-
-
+INSERT INTO dw_silver.erp_loc_info (loc_cid, loc_cntry)
+SELECT 
+    REPLACE(loc_cid, '-', ''),
+    -- Normalizing Country codes to full names for reporting
+    CASE WHEN UPPER(TRIM(loc_cntry)) IN ('US', 'USA') THEN 'United States'
+         WHEN UPPER(TRIM(loc_cntry)) = 'DE' THEN 'Germany'
+         WHEN COALESCE(UPPER(TRIM(loc_cntry)), '') = '' THEN 'n/a'
+         ELSE TRIM(loc_cntry)
+    END
+FROM dw_bronze.erp_loc_info;
