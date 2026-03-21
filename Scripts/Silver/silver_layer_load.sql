@@ -110,6 +110,25 @@ select
 from crm_sales_details
 
 
+truncate table dw_silver.erp_cust_info;
+insert into dw_silver.erp_cust_info(
+	cst_cid, 
+    cst_bdate, 
+    cst_gen
+)
+select 
+	case
+		when cst_cid like 'NAS%' then substring(cst_cid,4,length(cst_cid))
+        else cst_cid
+        end cst_cid,
+    cst_bdate, 
+	case trim(upper(cst_gen))
+		when 'M' then 'Male'
+		when 'F' then 'Female'
+		when '' then null
+		else trim(cst_gen)
+		end cst_gen
+ from erp_cust_info;
 
 
 
