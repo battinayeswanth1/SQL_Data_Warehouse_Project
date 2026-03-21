@@ -165,3 +165,21 @@ SELECT
          ELSE TRIM(loc_cntry)
     END
 FROM dw_bronze.erp_loc_info;
+
+-- =============================================================================
+-- 6. Loading erp_px_cat_info (Category Lookup Standardization)
+-- =============================================================================
+TRUNCATE TABLE dw_silver.erp_px_cat_info;
+
+INSERT INTO dw_silver.erp_px_cat_info (
+    id,
+    cat,
+    subcat,
+    maintenance
+)
+SELECT
+    id,
+    TRIM(cat),           -- Remove leading/trailing spaces for clean joins
+    TRIM(subcat),        -- Standardize sub-category names
+    TRIM(maintenance)    -- Ensure maintenance flags are clean
+FROM dw_bronze.erp_px_cat_info;
