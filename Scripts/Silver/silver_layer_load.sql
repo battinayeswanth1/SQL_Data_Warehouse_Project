@@ -161,7 +161,7 @@ SELECT
     -- Normalizing Country codes to full names for reporting
     CASE WHEN UPPER(TRIM(loc_cntry)) IN ('US', 'USA') THEN 'United States'
          WHEN UPPER(TRIM(loc_cntry)) = 'DE' THEN 'Germany'
-         WHEN COALESCE(UPPER(TRIM(loc_cntry)), '') = '' THEN 'n/a'
+         WHEN TRIM(loc_cntry) = '' or loc_cntry is null THEN 'n/a'
          ELSE TRIM(loc_cntry)
     END
 FROM dw_bronze.erp_loc_info;
