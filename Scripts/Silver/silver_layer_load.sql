@@ -121,7 +121,10 @@ select
 		when cst_cid like 'NAS%' then substring(cst_cid,4,length(cst_cid))
         else cst_cid
         end cst_cid,
-    cst_bdate, 
+	case 
+		when cst_bdate > now() then null
+		else cst_bdate
+		end cst_bdate,
 	case 
 		when trim(upper(cst_gen)) in ('M', 'MALE') then 'Male'
 		when trim(upper(cst_gen)) in ('F', 'FEMALE') then 'Female'
@@ -145,6 +148,17 @@ select
         end loc_cntry
 from erp_loc_info
 
+
+truncate table dw_silver.erp_px_cat_info;
+
+insert into dw_silver.erp_px_cat_info(
+	cat_id,
+    cat_cat,
+    cat_subcat,
+    cat_maintenance
+)
+select *
+from erp_px_cat_info
 
 
  
