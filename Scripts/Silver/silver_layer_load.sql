@@ -122,13 +122,38 @@ select
         else cst_cid
         end cst_cid,
     cst_bdate, 
-	case trim(upper(cst_gen))
-		when 'M' then 'Male'
-		when 'F' then 'Female'
-		when '' then null
-		else trim(cst_gen)
+	case 
+		when trim(upper(cst_gen)) in ('M', 'MALE') then 'Male'
+		when trim(upper(cst_gen)) in ('F', 'FEMALE') then 'Female'
+		else 'n/a'
 		end cst_gen
  from erp_cust_info;
+
+
+truncate table dw_silver.erp_loc_info;
+insert into dw_silver.erp_loc_info(
+	loc_cid, 
+    loc_cntry
+    )
+select 
+    replace(loc_cid, '-','') as loc_cid,
+    case 
+		when upper(trim(loc_cntry)) in('US' , 'USA') then 'United States'
+        when upper(trim(loc_cntry)) = 'DE' then 'Germany'
+        when upper(trim(loc_cntry)) = '' or loc_cntry is null then 'n/a'
+        else trim(loc_cntry)
+        end loc_cntry
+from erp_loc_info
+
+
+
+ 
+
+ 
+ 
+ 
+ 
+ 
 
 
 
