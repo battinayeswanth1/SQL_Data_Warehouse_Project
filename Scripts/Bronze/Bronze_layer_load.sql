@@ -25,7 +25,6 @@ BEGIN
     DECLARE batch_start_time DATETIME;
     DECLARE batch_end_time DATETIME;
 
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         SELECT '==========================================' AS msg;
         SELECT 'ERROR OCCURRED DURING LOADING BRONZE LAYER' AS msg;
