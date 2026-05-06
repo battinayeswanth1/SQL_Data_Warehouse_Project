@@ -50,10 +50,7 @@ BEGIN
     SELECT '>> Inserting Data Into: bronze_crm_cust_info' AS msg;
     LOAD DATA LOCAL INFILE '/path/to/datasets/source_crm/cust_info.csv'
     INTO TABLE bronze_crm_cust_info
-    FIELDS TERMINATED BY ',' 
-    ENCLOSED BY '"' 
-    LINES TERMINATED BY '\n'
-    IGNORE 1 ROWS;
+    
 
     SET end_time = NOW();
     SELECT CONCAT('>> Load Duration: ', TIMESTAMPDIFF(SECOND, start_time, end_time), ' seconds') AS msg;
@@ -63,10 +60,7 @@ BEGIN
     TRUNCATE TABLE bronze_crm_prd_info;
     LOAD DATA LOCAL INFILE '/path/to/datasets/source_crm/prd_info.csv'
     INTO TABLE bronze_crm_prd_info
-    FIELDS TERMINATED BY ',' 
-    ENCLOSED BY '"' 
-    LINES TERMINATED BY '\n'
-    IGNORE 1 ROWS;
+    
     SET end_time = NOW();
     SELECT CONCAT('>> Load Duration: ', TIMESTAMPDIFF(SECOND, start_time, end_time), ' seconds') AS msg;
 
@@ -75,10 +69,7 @@ BEGIN
     TRUNCATE TABLE bronze_crm_sales_details;
     LOAD DATA LOCAL INFILE '/path/to/datasets/source_crm/sales_details.csv'
     INTO TABLE bronze_crm_sales_details
-    FIELDS TERMINATED BY ',' 
-    ENCLOSED BY '"' 
-    LINES TERMINATED BY '\n'
-    IGNORE 1 ROWS;
+   
     SET end_time = NOW();
     SELECT CONCAT('>> Load Duration: ', TIMESTAMPDIFF(SECOND, start_time, end_time), ' seconds') AS msg;
 
@@ -92,10 +83,7 @@ BEGIN
     TRUNCATE TABLE bronze_erp_loc_a101;
     LOAD DATA LOCAL INFILE '/path/to/datasets/source_erp/loc_a101.csv'
     INTO TABLE bronze_erp_loc_a101
-    FIELDS TERMINATED BY ',' 
-    ENCLOSED BY '"' 
-    LINES TERMINATED BY '\n'
-    IGNORE 1 ROWS;
+  
     SET end_time = NOW();
     SELECT CONCAT('>> Load Duration: ', TIMESTAMPDIFF(SECOND, start_time, end_time), ' seconds') AS msg;
 
@@ -104,10 +92,7 @@ BEGIN
     TRUNCATE TABLE bronze_erp_cust_az12;
     LOAD DATA LOCAL INFILE '/path/to/datasets/source_erp/cust_az12.csv'
     INTO TABLE bronze_erp_cust_az12
-    FIELDS TERMINATED BY ',' 
-    ENCLOSED BY '"' 
-    LINES TERMINATED BY '\n'
-    IGNORE 1 ROWS;
+   
     SET end_time = NOW();
     SELECT CONCAT('>> Load Duration: ', TIMESTAMPDIFF(SECOND, start_time, end_time), ' seconds') AS msg;
 
@@ -116,10 +101,7 @@ BEGIN
     TRUNCATE TABLE bronze_erp_px_cat_g1v2;
     LOAD DATA LOCAL INFILE '/path/to/datasets/source_erp/px_cat_g1v2.csv'
     INTO TABLE bronze_erp_px_cat_g1v2
-    FIELDS TERMINATED BY ',' 
-    ENCLOSED BY '"' 
-    LINES TERMINATED BY '\n'
-    IGNORE 1 ROWS;
+ 
     SET end_time = NOW();
     SELECT CONCAT('>> Load Duration: ', TIMESTAMPDIFF(SECOND, start_time, end_time), ' seconds') AS msg;
 
