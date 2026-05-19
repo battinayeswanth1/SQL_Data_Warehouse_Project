@@ -2,7 +2,7 @@
 
 Welcome to the Data Warehouse and Analytics Project repository! This project demonstrates a comprehensive data warehousing and data analytics, moving from raw data ingestion to generating actionable business insights. Designed as a portfolio piece, it highlights industry best practices in data engineering and analytics.
 
-
+---
 
 ## 🏗 Medallion Architecture 
 
@@ -19,8 +19,7 @@ The final stage where data is integrated into a Star Schema. This layer supports
 <img width="832" height="554" alt="image" src="https://github.com/user-attachments/assets/561999b3-6f7f-4684-bb2c-2217b10c74ba" />
 
 
-
-
+---
 
 
 ## 🎯 Project Requirements
@@ -42,7 +41,7 @@ Scope: Focus on the latest dataset only; historization of data is not required.
 
 Documentation: Provide clear documentation of the data model to support both business stakeholders and analytics teams.
 
-
+---
 
 ### 📊BI: Analytics & Reporting (Data Analytics)
 
@@ -59,7 +58,7 @@ Sales Trends
 
 These insights empower stakeholders with key business metrics, enabling strategic decision-making.
 
-
+---
 
 ## 🛠 Tech Stack
 
@@ -71,13 +70,13 @@ Data Modeling: Star Schema (Fact & Dimension Tables)
 
 Visualization: Power BI / SQL Reporting 
 
-
+---
 
 ## 📜 License
 
 This project is licensed under the MIT License. You are free to use, modify, and share this project with proper attribution.
 
-
+---
 
 ## 👨‍💻 About Me
 
